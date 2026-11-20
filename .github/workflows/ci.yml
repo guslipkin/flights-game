@@ -1,0 +1,29 @@
+name: CI
+
+# Analysis and tests on every push and PR. Runs on Linux only: macOS runners
+# bill at 10x minutes on a private repo, so native builds are left to the
+# Release workflow.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_call:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.50.0
+          cache: true
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test

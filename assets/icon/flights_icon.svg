@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <!-- Background: the app's navy, as a full square so platforms can apply
+       their own icon mask (squircle on iOS/macOS, circle on Android). -->
+  <rect width="1024" height="1024" fill="#0D1117"/>
+
+  <!-- Two flight arcs that read as a gull's wings: shallow arcs from the
+       body (the middle airport, lowest point) out to each wingtip, each
+       wing tilted up 5 degrees about the body. -->
+  <path d="M 182 468 C 284 426, 444 435, 512 597
+           C 580 435, 740 426, 842 468"
+        fill="none" stroke="#E69F00" stroke-width="48"
+        stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Airports: start (green), stop over (sky blue), destination (purple),
+       the same roles and Okabe-Ito colors as on the in-game map. -->
+  <circle cx="182" cy="468" r="58" fill="#009E73" stroke="#0D1117" stroke-width="20"/>
+  <circle cx="512" cy="597" r="58" fill="#56B4E9" stroke="#0D1117" stroke-width="20"/>
+  <circle cx="842" cy="468" r="58" fill="#CC79A7" stroke="#0D1117" stroke-width="20"/>
+</svg>
