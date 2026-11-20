@@ -198,6 +198,9 @@ class FlightDeckColors {
   static String get monospaceFontFamily {
     if (kIsWeb) return 'monospace';
     if (Platform.isIOS || Platform.isMacOS) return 'Menlo';
+    // Windows has no font called "monospace", so it would fall back to a
+    // proportional one.
+    if (Platform.isWindows) return 'Consolas';
     return 'monospace';
   }
 }

@@ -85,7 +85,7 @@ class OptionsPanel extends StatelessWidget {
                 // The landscape side column can be narrower than the hint.
                 Flexible(
                   child: Text(
-                    Platform.isMacOS
+                    (Platform.isMacOS || Platform.isWindows)
                         ? 'Click to fly · ↑↓ to preview'
                         : controller.oneTapToFly
                             ? 'Tap to fly'
