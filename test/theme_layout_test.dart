@@ -155,7 +155,7 @@ void main() {
       const MethodChannel('me.guslipkin.flights/platform'),
       (call) async {
         if (call.method == 'writeSave') {
-          saved = (call.arguments as Map)['json'] as String;
+          saved = (call.arguments as Map)['content'] as String;
         }
         return null;
       },

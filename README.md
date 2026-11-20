@@ -14,7 +14,7 @@ Flights is the airport-code route puzzle from [`jotto-cli`](https://github.com/g
 
 ## Playing
 
-Each game deals a start and a destination airport. Pick a flight from the list of connections, keep hopping, and try to arrive in as few hops as the shortest route. `← Go Back` undoes hops, and when the game ends (by arriving or giving up) the route panel shows where your route left the shortest one and lets you step through each hop on the map.
+Each game deals a start and a destination airport whose codes differ in every letter. Each hop changes **one letter** of your current airport's code (LAX → LAS → LOS), and needs a real ticket between the two: a direct flight or one with a connection. The options list shows every airport you can hop to. Win by arriving by the shortest distance; arrive the long way and you're told so, and can go back and improve. `← Go Back` undoes hops, and when the game ends (by arriving or giving up) the route panel shows where your route left the shortest one and lets you step through each hop on the map.
 
 **Touch:** tap an option (or an orange airport on the map) to preview its hop, then tap it again or press `Fly →`. Settings → **Tap to fly** → *One tap* flies on the first tap instead.
 
@@ -55,7 +55,7 @@ The daily puzzle is the same for everyone each UTC day, and the same one `flight
 - **Layout:** whenever the window is wider than tall (and at least 760pt wide), the map sits beside a side column that takes a third of the width, between 300 and 440pt. Otherwise the map stacks above the options, whose box has a fixed height (at most 380pt) so it doesn't jump between hops. Either way, the map gets all the remaining space and keeps its zoom when the window is resized. Phones are locked to portrait; iPads rotate and Mac windows resize down to 380pt wide.
 - **Themes:** Light, Dark or System (follows the device). Dark comes in Navy or Black (for OLED screens). The light theme uses darker accents so colored text stays readable on white.
 - **Sound and haptics:** short jet flyby sounds and haptic pulses for hops, going back, long flights and winning. Either can be turned off in Settings.
-- **Autosave:** the game in progress, units (`nm`, `mi` or `km`), map line style, theme and custom rules are saved after every move.
+- **Autosave:** the game in progress is saved after every move and picked up where you left it on the next launch. Settings (units, map lines, theme, sound, haptics, tap to fly and custom rules) and the difficulty you last chose are kept between games. As in the CLI, a finished game isn't kept: the next launch deals a new one at your difficulty. Playing the daily (always Medium) doesn't change it.
 
 ## Development
 

@@ -39,7 +39,12 @@ class FlightsController extends ChangeNotifier {
     this.themeChoice = ThemeChoice.system,
     this.darkStyle = DarkStyle.navy,
     this.oneTapToFly = false,
+    Difficulty? preferredDifficulty,
   })  : _game = initialGame,
+        preferredDifficulty = preferredDifficulty ??
+            (initialGame.dailyDate == null
+                ? initialGame.difficulty
+                : Difficulty.medium),
         statusMessage = initialMessage,
         statusColor = initialMessageColor {
     _resetSelection();
@@ -71,6 +76,11 @@ class FlightsController extends ChangeNotifier {
   /// Touch only: fly on the first tap of an option instead of previewing it
   /// first. Mouse clicks always fly on the first click, as in jotto-cli.
   bool oneTapToFly;
+
+  /// The level New Game deals and the app starts at. Kept apart from the
+  /// current game's difficulty because the daily is always Medium, and
+  /// playing it shouldn't change the level the player picked.
+  Difficulty preferredDifficulty;
   String statusMessage;
   Color statusColor;
 
@@ -137,6 +147,7 @@ class FlightsController extends ChangeNotifier {
     var theme = ThemeChoice.system;
     var dark = DarkStyle.navy;
     var oneTap = false;
+    var difficulty = Difficulty.medium;
 
     final rawJson = await PlatformBridge.readSaveJson();
     if (rawJson != null && rawJson.isNotEmpty) {
@@ -155,6 +166,9 @@ class FlightsController extends ChangeNotifier {
           theme = ThemeChoice.fromName(flightsObj['theme'] as String?);
           dark = DarkStyle.fromName(flightsObj['dark_style'] as String?);
           oneTap = (flightsObj['one_tap'] as bool?) ?? false;
+          difficulty = Difficulty.fromName(
+                  (flightsObj['difficulty'] as String?) ?? '') ??
+              Difficulty.medium;
           if (flightsObj['custom'] is Map<String, dynamic>) {
             savedCustom =
                 Rules.fromJson(flightsObj['custom'] as Map<String, dynamic>) ??
@@ -179,26 +193,34 @@ class FlightsController extends ChangeNotifier {
               themeChoice: theme,
               darkStyle: dark,
               oneTapToFly: oneTap,
+              preferredDifficulty: difficulty,
             );
           }
         }
       } catch (_) {}
     }
 
-    final (fresh, _) = FlightsGame.random(
-      difficulty: Difficulty.medium,
+    // No game in progress (none saved, or the last one finished): deal one
+    // at the level the player last chose, falling back to Medium if saved
+    // custom settings can no longer deal a puzzle.
+    var (fresh, _) = FlightsGame.random(
+      difficulty: difficulty,
       networkProvider: repo.network,
       custom: savedCustom,
       units: savedUnits,
       curves: savedCurves,
     );
-    final game = fresh ??
-        FlightsGame.random(
-          difficulty: Difficulty.medium,
-          networkProvider: repo.network,
-          units: savedUnits,
-          curves: savedCurves,
-        ).$1!;
+    if (fresh == null) {
+      difficulty = Difficulty.medium;
+      (fresh, _) = FlightsGame.random(
+        difficulty: difficulty,
+        networkProvider: repo.network,
+        custom: savedCustom,
+        units: savedUnits,
+        curves: savedCurves,
+      );
+    }
+    final game = fresh!;
 
     return FlightsController(
       repository: repo,
@@ -210,6 +232,7 @@ class FlightsController extends ChangeNotifier {
       themeChoice: theme,
       darkStyle: dark,
       oneTapToFly: oneTap,
+      preferredDifficulty: difficulty,
     );
   }
 
@@ -234,6 +257,7 @@ class FlightsController extends ChangeNotifier {
           'theme': themeChoice.name,
           'dark_style': darkStyle.name,
           'one_tap': oneTapToFly,
+          'difficulty': preferredDifficulty.name,
         },
       };
       await PlatformBridge.writeSaveJson(jsonEncode(root));
@@ -361,7 +385,7 @@ class FlightsController extends ChangeNotifier {
   }
 
   void startNewGame([Difficulty? newDifficulty]) {
-    final targetDifficulty = newDifficulty ?? _game.difficulty;
+    final targetDifficulty = newDifficulty ?? preferredDifficulty;
     final (nextGame, err) = FlightsGame.random(
       difficulty: targetDifficulty,
       networkProvider: networkProvider,
@@ -371,6 +395,7 @@ class FlightsController extends ChangeNotifier {
     );
     if (nextGame != null) {
       _game = nextGame;
+      preferredDifficulty = targetDifficulty;
       final about = targetDifficulty == Difficulty.custom
           ? _game.rules.summary()
           : targetDifficulty.description;

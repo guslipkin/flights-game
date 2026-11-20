@@ -104,8 +104,9 @@ class PlatformBridge {
 
   static Future<void> writeSaveJson(String jsonText) async {
     try {
+      // The native side on every platform reads the text from 'content'.
       await _channel.invokeMethod<void>('writeSave', <String, dynamic>{
-        'json': jsonText,
+        'content': jsonText,
       });
     } catch (_) {}
   }
