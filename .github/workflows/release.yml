@@ -1,13 +1,14 @@
 name: Release
 
-# Pushing a version tag (v1.2.3) tests, builds all three apps and attaches them
-# to that tag's GitHub release, creating the release if it doesn't exist yet
+# Pushing a version tag (v1.2.3) tests, builds the Android and macOS apps and
+# attaches them to that tag's GitHub release, creating the release if it doesn't exist yet
 # (so notes written by hand before the builds finish are kept). Running it by
 # hand from the Actions tab builds the apps as workflow artifacts only.
 #
-# Builds are unsigned: the APK uses Flutter's debug signing key, macOS shows a
-# Gatekeeper warning on first open, and the iOS .ipa must be re-signed before
-# it will install. Signing needs Apple/Android keys added as repo secrets.
+# Builds are unsigned: the APK uses Flutter's debug signing key and macOS shows
+# a Gatekeeper warning on first open. There is no iOS build, because an
+# unsigned .ipa can't be installed; that needs a paid Apple developer account
+# and signing keys added as repo secrets.
 on:
   push:
     tags: ['v*']
@@ -46,9 +47,7 @@ jobs:
           name: android
           path: Flights-android.apk
 
-  # macOS and iOS share one job so the macOS runner (10x billing) only pays
-  # for one checkout and Flutter setup.
-  apple:
+  macos:
     needs: test
     runs-on: macos-latest
     timeout-minutes: 45
@@ -64,27 +63,16 @@ jobs:
         run: |
           # shellcheck disable=SC2046
           flutter build macos --release $(scripts/ci-build-args.sh)
-      - name: Build iOS / iPadOS (unsigned)
-        # The script prints separate flags, so splitting is intended.
-        run: |
-          # shellcheck disable=SC2046
-          flutter build ios --release --no-codesign $(scripts/ci-build-args.sh)
       - name: Package
-        run: |
-          ditto -c -k --keepParent build/macos/Build/Products/Release/Flights.app Flights-macos-arm64.zip
-          mkdir Payload
-          cp -R build/ios/iphoneos/Runner.app Payload/
-          zip -qry Flights-ios-unsigned.ipa Payload
+        run: ditto -c -k --keepParent build/macos/Build/Products/Release/Flights.app Flights-macos-arm64.zip
       - uses: actions/upload-artifact@v7
         with:
-          name: apple
-          path: |
-            Flights-macos-arm64.zip
-            Flights-ios-unsigned.ipa
+          name: macos
+          path: Flights-macos-arm64.zip
 
   release:
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [android, apple]
+    needs: [android, macos]
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -102,4 +90,4 @@ jobs:
           gh release view "$TAG" >/dev/null 2>&1 \
             || gh release create "$TAG" --title "$TAG" --generate-notes
           gh release upload "$TAG" --clobber \
-            Flights-android.apk Flights-macos-arm64.zip Flights-ios-unsigned.ipa
+            Flights-android.apk Flights-macos-arm64.zip
