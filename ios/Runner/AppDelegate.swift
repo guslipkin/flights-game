@@ -57,6 +57,16 @@ import UIKit
         let content = (args?["content"] as? String) ?? ""
         result(self.writeSaveFile(content: content))
 
+      case "appVersion":
+        result(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String)
+
+      case "openUrl":
+        let args = call.arguments as? [String: Any]
+        if let raw = args?["url"] as? String, let url = URL(string: raw) {
+          UIApplication.shared.open(url)
+        }
+        result(nil)
+
       default:
         result(FlutterMethodNotImplemented)
       }

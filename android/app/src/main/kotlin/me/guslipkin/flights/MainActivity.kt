@@ -2,6 +2,7 @@ package me.guslipkin.flights
 
 import android.content.Intent
 import android.media.AudioAttributes
+import android.net.Uri
 import android.media.SoundPool
 import io.flutter.FlutterInjector
 import io.flutter.embedding.android.FlutterActivity
@@ -66,6 +67,16 @@ class MainActivity : FlutterActivity() {
                     } catch (e: Exception) {
                         result.success(false)
                     }
+                }
+                "appVersion" -> {
+                    result.success(packageManager.getPackageInfo(packageName, 0).versionName)
+                }
+                "openUrl" -> {
+                    val url = call.argument<String>("url")
+                    if (url != null) {
+                        startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+                    }
+                    result.success(null)
                 }
                 else -> result.notImplemented()
             }

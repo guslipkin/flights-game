@@ -10,6 +10,7 @@ import '../data/flights_repository.dart';
 import '../data/network.dart';
 import '../game/flights_game.dart';
 import '../util/platform_bridge.dart';
+import '../util/update_checker.dart';
 import 'theme/flight_deck_theme.dart';
 
 class SelectedHopInfo {
@@ -81,6 +82,9 @@ class FlightsController extends ChangeNotifier {
   /// current game's difficulty because the daily is always Medium, and
   /// playing it shouldn't change the level the player picked.
   Difficulty preferredDifficulty;
+
+  /// A newer release found on GitHub at launch, until the player dismisses it.
+  AvailableUpdate? availableUpdate;
   String statusMessage;
   Color statusColor;
 
@@ -528,6 +532,27 @@ class FlightsController extends ChangeNotifier {
       routeStep = null;
     }
     PlatformBridge.onPreviewSelect(hapticsEnabled: hapticsEnabled);
+    notifyListeners();
+  }
+
+  /// Looks for a newer release on GitHub, once, at launch. It runs in the
+  /// background and stays quiet unless it finds one.
+  Future<void> checkForUpdate() async {
+    final version = await PlatformBridge.appVersion();
+    if (version == null) return;
+    final update = await UpdateChecker.check(version);
+    if (update == null) return;
+    availableUpdate = update;
+    notifyListeners();
+  }
+
+  void openUpdate() {
+    final update = availableUpdate;
+    if (update != null) PlatformBridge.openUrl(update.url);
+  }
+
+  void dismissUpdate() {
+    availableUpdate = null;
     notifyListeners();
   }
 

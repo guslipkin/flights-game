@@ -56,6 +56,7 @@ The daily puzzle is the same for everyone each UTC day, and the same one `flight
 - **Themes:** Light, Dark or System (follows the device). Dark comes in Navy or Black (for OLED screens). The light theme uses darker accents so colored text stays readable on white.
 - **Sound and haptics:** short jet flyby sounds and haptic pulses for hops, going back, long flights and winning. Either can be turned off in Settings.
 - **Autosave:** the game in progress is saved after every move and picked up where you left it on the next launch. Settings (units, map lines, theme, sound, haptics, tap to fly and custom rules) and the difficulty you last chose are kept between games. As in the CLI, a finished game isn't kept: the next launch deals a new one at your difficulty. Playing the daily (always Medium) doesn't change it.
+- **Update check:** on launch, the app asks GitHub for the latest release, and if it's newer than the running version, shows a one-line banner linking to it (dismiss it with ✕). It sends nothing about you or your game, and if GitHub can't be reached (offline, rate-limited, down) it stays silent. It's the app's only network use.
 
 ## Development
 

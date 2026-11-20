@@ -193,6 +193,10 @@ class _FlightsScreenState extends State<FlightsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    if (ctrl.availableUpdate != null) ...[
+                      _UpdateBanner(controller: ctrl),
+                      const SizedBox(height: 8),
+                    ],
                     _FlightDeckHeader(
                       controller: ctrl,
                       onOpenDifficulty: _openDifficultyDialog,
@@ -864,6 +868,63 @@ class _BottomActionButton extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// A one-line note that a newer release is out, with a link to it. Slim and
+/// dismissible, so it never pushes the game around for long.
+class _UpdateBanner extends StatelessWidget {
+  const _UpdateBanner({required this.controller});
+
+  final FlightsController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final update = controller.availableUpdate!;
+    final accent = FlightDeckColors.accentSkyBlue;
+    return Container(
+      padding: const EdgeInsets.only(left: 12),
+      decoration: BoxDecoration(
+        color: FlightDeckColors.surfaceCard,
+        border: Border.all(color: accent.withValues(alpha: 0.6)),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.system_update_alt, size: 16, color: accent),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'Flights ${update.version} is available',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: FlightDeckColors.textPrimary,
+                fontFamily: FlightDeckColors.monospaceFontFamily,
+                fontSize: 13,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: controller.openUpdate,
+            style: TextButton.styleFrom(foregroundColor: accent),
+            child: Text(
+              'Get it',
+              style: TextStyle(
+                fontFamily: FlightDeckColors.monospaceFontFamily,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          IconButton(
+            tooltip: 'Dismiss',
+            onPressed: controller.dismissUpdate,
+            icon: Icon(Icons.close, size: 16, color: FlightDeckColors.textMuted),
+            visualDensity: VisualDensity.compact,
+          ),
+        ],
       ),
     );
   }

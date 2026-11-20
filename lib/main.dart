@@ -50,6 +50,7 @@ class _FlightsAppState extends State<FlightsApp> with WidgetsBindingObserver {
         setState(() {
           _controller = ctrl;
         });
+        ctrl.checkForUpdate();
       }
     } catch (e) {
       if (mounted) {
