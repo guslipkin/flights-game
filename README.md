@@ -91,12 +91,40 @@ The script renders the SVG with AppKit (`scripts/svg2png.swift`, which keeps tra
 
 - **CI** (`.github/workflows/ci.yml`) runs `flutter analyze` and `flutter test` on every push to `main` and every pull request.
 - **Release** (`.github/workflows/release.yml`) runs when a version tag such as `v1.2.3` is pushed. It runs the tests, then builds and attaches these to the tag's GitHub release:
-  - `Flights-android.apk`, signed with Flutter's debug key: fine for sideloading, not for the Play Store.
+  - `Flights-android.apk`, signed with the release key (see [Android signing](#android-signing)), so each release installs as an update over the last.
   - `Flights-macos-arm64.zip`, unsigned: on first open, right-click → Open, or allow it in System Settings → Privacy & Security.
 
 If the release doesn't exist yet it's created with generated notes; one written by hand beforehand is kept. The app version comes from the tag and the build number from the workflow run number (`scripts/ci-build-args.sh`). Running the workflow by hand from the Actions tab produces the same builds as downloadable artifacts, without a release.
 
-There's no iOS build in releases: an unsigned `.ipa` can't be installed, and signing one needs a paid Apple developer account. To put the app on an iPhone or iPad, build it locally as above. The macOS build uses a macOS runner, which bills at 10× the minutes on a private repo, so it only runs on tags or by hand. Signed builds (Play Store, notarized macOS, TestFlight) need signing keys added as repository secrets.
+There's no iOS build in releases: an unsigned `.ipa` can't be installed, and signing one needs a paid Apple developer account. To put the app on an iPhone or iPad, build it locally as above. The macOS build uses a macOS runner, which bills at 10× the minutes on a private repo, so it only runs on tags or by hand. Notarized macOS and TestFlight builds would need Apple signing keys added as repository secrets.
+
+### Android signing
+
+Android only installs an update if it's signed with the same key as the app already installed, so every release must be signed with one permanent key. Without it each build is signed with a debug key unique to the machine (and to each CI run), and installing a newer release fails with a signing certificate mismatch.
+
+The key is a keystore file kept outside the repository. **Keep it and its password backed up**: if it's lost, no later release can update installed copies, and everyone has to uninstall (losing their saved game) and reinstall.
+
+The release workflow reads it from four repository secrets, and fails rather than fall back to a debug key if they're missing:
+
+| Secret | Value |
+|---|---|
+| `ANDROID_KEYSTORE_BASE64` | The keystore file, base64-encoded (`base64 -i flights-release.jks`) |
+| `ANDROID_KEYSTORE_PASSWORD` | The keystore's password |
+| `ANDROID_KEY_ALIAS` | The key's alias in it |
+| `ANDROID_KEY_PASSWORD` | The key's password |
+
+The release log's "Show the signing certificate" step prints the key's fingerprint, which should be the same on every release.
+
+To sign local release builds with the same key, so they also install over a release, create `android/key.properties` (git-ignored):
+
+```properties
+storeFile=/path/to/flights-release.jks
+storePassword=...
+keyAlias=...
+keyPassword=...
+```
+
+Without it, a local `flutter build apk --release` uses your machine's debug key: fine for trying a build, but it has to be uninstalled before a release will install, and vice versa.
 
 ## Credits and license
 
