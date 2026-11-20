@@ -92,11 +92,10 @@ The script renders the SVG with AppKit (`scripts/svg2png.swift`, which keeps tra
 - **Release** (`.github/workflows/release.yml`) runs when a version tag such as `v1.2.3` is pushed. It runs the tests, then builds and attaches these to the tag's GitHub release:
   - `Flights-android.apk`, signed with Flutter's debug key: fine for sideloading, not for the Play Store.
   - `Flights-macos-arm64.zip`, unsigned: on first open, right-click → Open, or allow it in System Settings → Privacy & Security.
-  - `Flights-ios-unsigned.ipa`, which must be re-signed before it will install.
 
 If the release doesn't exist yet it's created with generated notes; one written by hand beforehand is kept. The app version comes from the tag and the build number from the workflow run number (`scripts/ci-build-args.sh`). Running the workflow by hand from the Actions tab produces the same builds as downloadable artifacts, without a release.
 
-The Apple builds use a macOS runner, which bills at 10× the minutes on a private repo, so they only run on tags or by hand. Signed builds (Play Store, notarized macOS, TestFlight) need signing keys added as repository secrets.
+There's no iOS build in releases: an unsigned `.ipa` can't be installed, and signing one needs a paid Apple developer account. To put the app on an iPhone or iPad, build it locally as above. The macOS build uses a macOS runner, which bills at 10× the minutes on a private repo, so it only runs on tags or by hand. Signed builds (Play Store, notarized macOS, TestFlight) need signing keys added as repository secrets.
 
 ## Credits and license
 
