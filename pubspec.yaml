@@ -40,3 +40,9 @@ flutter_launcher_icons:
   macos:
     generate: true
     image_path: assets/icon/flights_icon_macos.png
+  # Windows shows icons as drawn, with no mask of its own, so it gets the
+  # same rounded tile as macOS.
+  windows:
+    generate: true
+    image_path: assets/icon/flights_icon_macos.png
+    icon_size: 256

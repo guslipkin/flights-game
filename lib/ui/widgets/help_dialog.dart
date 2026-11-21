@@ -172,8 +172,10 @@ class HelpDialog extends StatelessWidget {
                         font: font,
                       ),
                       // Touch-only devices have no use for key lists, so
-                      // these show on macOS or once a hardware key is used.
-                      if (Platform.isMacOS || controller.keyboardSeen) ...[
+                      // these show on desktops or once a hardware key is used.
+                      if (Platform.isMacOS ||
+                          Platform.isWindows ||
+                          controller.keyboardSeen) ...[
                         Padding(
                           padding: const EdgeInsets.symmetric(vertical: 8),
                           child: Divider(

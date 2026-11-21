@@ -1,13 +1,15 @@
 name: Release
 
-# Pushing a version tag (v1.2.3) tests, builds the Android and macOS apps and
-# attaches them to that tag's GitHub release, creating the release if it doesn't exist yet
+# Pushing a version tag (v1.2.3) tests, builds the Android, macOS and Windows
+# apps and attaches them to that tag's GitHub release, creating the release if it doesn't exist yet
 # (so notes written by hand before the builds finish are kept). Running it by
 # hand from the Actions tab builds the apps as workflow artifacts only.
 #
 # The APK is signed with the release key from the repo secrets (see the
-# README), so each release installs over the last. The macOS app is unsigned
-# and shows a Gatekeeper warning on first open. There is no iOS build, because an
+# README), so each release installs over the last. The macOS app has no
+# Developer ID signature, so macOS blocks its first open until it's allowed
+# in System Settings (see the README's Installing section). The Windows MSI
+# is unsigned too, so SmartScreen warns on first run. There is no iOS build, because an
 # unsigned .ipa can't be installed; that needs a paid Apple developer account
 # and signing keys added as repo secrets.
 on:
@@ -85,16 +87,56 @@ jobs:
         run: |
           # shellcheck disable=SC2046
           flutter build macos --release $(scripts/ci-build-args.sh)
-      - name: Package
-        run: ditto -c -k --keepParent build/macos/Build/Products/Release/Flights.app Flights-macos-arm64.zip
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+      - name: Install dmgbuild
+        run: python -m pip install dmgbuild==2.0.0
+      - name: Package as a disk image
+        run: scripts/make-dmg.sh build/macos/Build/Products/Release/Flights.app Flights-macos.dmg
       - uses: actions/upload-artifact@v7
         with:
           name: macos
-          path: Flights-macos-arm64.zip
+          path: Flights-macos.dmg
+
+  windows:
+    needs: test
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+      - name: Build Windows (x64)
+        shell: bash
+        # The script prints separate flags, so splitting is intended.
+        run: |
+          # shellcheck disable=SC2046
+          flutter build windows --release $(scripts/ci-build-args.sh)
+      - name: Install WiX
+        run: dotnet tool install --global wix --version 5.0.2
+      - name: Package as an MSI
+        shell: pwsh
+        # The version from the tag, as for the other builds; off a tag,
+        # pubspec.yaml's.
+        run: |
+          $version = if ($env:GITHUB_REF_TYPE -eq 'tag') {
+            $env:GITHUB_REF_NAME.TrimStart('v')
+          } else {
+            (Select-String -Path pubspec.yaml -Pattern '^version:\s*(\S+)').Matches[0].Groups[1].Value
+          }
+          scripts/make-msi.ps1 -Version $version -Out Flights-windows.msi
+      - uses: actions/upload-artifact@v7
+        with:
+          name: windows
+          path: Flights-windows.msi
 
   release:
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [android, macos]
+    needs: [android, macos, windows]
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -112,4 +154,4 @@ jobs:
           gh release view "$TAG" >/dev/null 2>&1 \
             || gh release create "$TAG" --title "$TAG" --generate-notes
           gh release upload "$TAG" --clobber \
-            Flights-android.apk Flights-macos-arm64.zip
+            Flights-android.apk Flights-macos.dmg Flights-windows.msi

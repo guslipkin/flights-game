@@ -1,0 +1,64 @@
+<!--
+  The Windows installer (Flights-windows.msi), built with WiX Toolset v5 by
+  scripts/make-msi.ps1 from the `flutter build windows` output. It installs to
+  Program Files, adds a Start menu shortcut and an entry in Settings > Apps,
+  and installs each new version over the last.
+
+  Preprocessor variables, passed with -d:
+    Version   the app's version, plain numbers ("1.2.3"), as MSI requires
+    AppDir    the build folder holding Flights.exe, its DLLs and data\
+    IconFile  the app icon, for the shortcut and Settings > Apps
+-->
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <!-- The UpgradeCode identifies Flights across versions, so a new version
+       replaces the old one instead of installing beside it. Never change it,
+       or installed copies stop being upgraded. -->
+  <Package
+      Name="Flights"
+      Manufacturer="Gus Lipkin"
+      Version="$(var.Version)"
+      UpgradeCode="937F097E-2B62-4EC8-8731-D22653B9CD58"
+      Scope="perMachine">
+
+    <!-- Same-version reinstalls are allowed so a rebuilt release (or a
+         by-hand workflow run) still installs over an existing copy. -->
+    <MajorUpgrade
+        AllowSameVersionUpgrades="yes"
+        DowngradeErrorMessage="A newer version of Flights is already installed." />
+    <MediaTemplate EmbedCab="yes" />
+
+    <Icon Id="Flights.ico" SourceFile="$(var.IconFile)" />
+    <Property Id="ARPPRODUCTICON" Value="Flights.ico" />
+    <Property Id="ARPURLINFOABOUT" Value="https://github.com/guslipkin/flights-game" />
+
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="INSTALLFOLDER" Name="Flights">
+        <!-- Everything Flutter built, so new DLLs or assets never need this
+             file updated. -->
+        <Files Include="$(var.AppDir)\**" />
+      </Directory>
+    </StandardDirectory>
+
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Component Id="StartMenuShortcut">
+        <Shortcut
+            Id="FlightsShortcut"
+            Name="Flights"
+            Description="Find the shortest route between two airports"
+            Target="[INSTALLFOLDER]Flights.exe"
+            WorkingDirectory="INSTALLFOLDER"
+            Icon="Flights.ico" />
+        <!-- A shortcut can't be a component's key path, so this value
+             stands in for it. HKMU is the machine hive for a per-machine
+             install, matching the shortcut's all-users Start menu. -->
+        <RegistryValue
+            Root="HKMU"
+            Key="Software\Flights"
+            Name="StartMenuShortcut"
+            Type="integer"
+            Value="1"
+            KeyPath="yes" />
+      </Component>
+    </StandardDirectory>
+  </Package>
+</Wix>
